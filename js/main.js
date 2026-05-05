@@ -119,7 +119,8 @@ function escapeHtml(value) {
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;');
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
 }
 
 function normalize(item = {}) {
@@ -333,8 +334,8 @@ function renderInsights(items) {
   refs.insights.innerHTML = cards.map((card) => `
     <article class="card insight-card">
       <p class="eyebrow">${card.label}</p>
-      <h3>${card.title}</h3>
-      <p>${card.body}</p>
+      <h3>${escapeHtml(card.title)}</h3>
+      <p>${escapeHtml(card.body)}</p>
     </article>
   `).join('');
 }
@@ -351,20 +352,20 @@ function renderList(items) {
   }
 
   refs.list.innerHTML = items.map((item) => `
-    <button class="item ${item.id === state.ui.selectedId ? 'is-selected' : ''}" type="button" data-id="${item.id}">
+    <button class="item ${item.id === state.ui.selectedId ? 'is-selected' : ''}" type="button" data-id="${escapeHtml(item.id)}">
       <div class="item-top">
-        <strong>${item.title}</strong>
+        <strong>${escapeHtml(item.title)}</strong>
         <span class="score">${priority(item)}</span>
       </div>
-      <p>${item.note}</p>
+      <p>${escapeHtml(item.note)}</p>
       <div class="badge-row">
         <span class="pill ${daysFromToday(item.dueDate) <= 2 ? 'warn' : 'success'}">Due ${formatDate(item.dueDate)}</span>
         <span class="pill">${item.minutes} min</span>
-        <span class="pill">${item.module}</span>
+        <span class="pill">${escapeHtml(item.module)}</span>
       </div>
       <div class="meta">
-        <span>${item.category}</span>
-        <span>${item.state}</span>
+        <span>${escapeHtml(item.category)}</span>
+        <span>${escapeHtml(item.state)}</span>
         <span>Confidence ${item.confidence}/10</span>
         <span>${item.reviews} review cycles</span>
       </div>
@@ -387,7 +388,7 @@ function renderEditor(item) {
     <div class="editor-head">
       <div>
         <p class="eyebrow">Study editor</p>
-        <h3>${item.title}</h3>
+        <h3>${escapeHtml(item.title)}</h3>
       </div>
       <span class="score">Priority ${priority(item)}</span>
     </div>
@@ -472,10 +473,10 @@ function renderOrbitPanels() {
       ${active.slice(0, 3).map((item) => `
         <div class="mini-card">
           <div class="inline-split">
-            <strong>${item.title}</strong>
+            <strong>${escapeHtml(item.title)}</strong>
             <span class="pill ${daysFromToday(item.dueDate) <= 2 ? 'warn' : 'success'}">${formatDate(item.dueDate)}</span>
           </div>
-          <p>${item.minutes} minutes, ${item.confidence}/10 confidence, ${item.module}.</p>
+          <p>${item.minutes} minutes, ${item.confidence}/10 confidence, ${escapeHtml(item.module)}.</p>
         </div>
       `).join('') || `<div class="empty"><strong>Nothing queued</strong><p>Everything is complete. Nicely done.</p></div>`}
     </div>
@@ -491,8 +492,8 @@ function renderOrbitPanels() {
       <span class="chip">${state.items.reduce((sum, item) => sum + item.reviews, 0)} reviews</span>
     </div>
     <ul class="metric-list">
-      ${byCategory.map(({ entry, minutes }) => `<li><span>${entry}</span><strong>${minutes}m</strong></li>`).join('')}
-      <li><span>Nearest deadline</span><strong>${active[0] ? active[0].title : '—'}</strong></li>
+      ${byCategory.map(({ entry, minutes }) => `<li><span>${escapeHtml(entry)}</span><strong>${minutes}m</strong></li>`).join('')}
+      <li><span>Nearest deadline</span><strong>${active[0] ? escapeHtml(active[0].title) : '—'}</strong></li>
     </ul>
   `;
 }
