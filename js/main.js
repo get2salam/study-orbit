@@ -241,13 +241,28 @@ function exportState() {
   showToast('Downloaded backup.');
 }
 
+function parseBackup(raw) {
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new Error('Backup file is not valid JSON.');
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error('Backup must be a JSON object.');
+  }
+  if (!Array.isArray(parsed.items)) {
+    throw new Error('Backup is missing an "items" array.');
+  }
+  return parsed;
+}
+
 async function importState(file) {
-  const raw = await file.text();
-  const parsed = JSON.parse(raw);
+  const parsed = parseBackup(await file.text());
   commit({
     ...seedState(),
     ...parsed,
-    items: (parsed.items || []).map((item) => normalize(item)),
+    items: parsed.items.map((item) => normalize(item)),
     ui: { ...seedState().ui, ...(parsed.ui || {}) },
   });
   showToast('Imported backup.');
@@ -555,7 +570,7 @@ document.addEventListener('change', async (event) => {
       await importState(file);
     } catch (error) {
       console.error(error);
-      showToast('Import failed.');
+      showToast(error?.message || 'Import failed.');
     } finally {
       event.target.value = '';
     }
