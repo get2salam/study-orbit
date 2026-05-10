@@ -50,6 +50,27 @@ const CONFIG = {
 
 const STORAGE_KEY = `${CONFIG.slug}/state/v2`;
 const NUMBER_FIELDS = new Set(['score', 'effort', 'confidence', 'minutes', 'reviews']);
+const ITEM_NUMBER_BOUNDS = {
+  score: { min: 1, max: 10, fallback: 7 },
+  effort: { min: 1, max: 10, fallback: 3 },
+  confidence: { min: 1, max: 10, fallback: 5 },
+  minutes: { min: 0, max: 1440, fallback: 60 },
+  reviews: { min: 0, max: 999, fallback: 0 },
+};
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+function clampNumber(value, { min, max, fallback }) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return fallback;
+  return Math.min(max, Math.max(min, Math.round(num)));
+}
+
+function validIsoDate(value, fallback) {
+  if (typeof value !== 'string' || !ISO_DATE_PATTERN.test(value)) return fallback;
+  const parsed = new Date(`${value}T00:00:00`);
+  return Number.isNaN(parsed.getTime()) ? fallback : value;
+}
+
 const refs = {
   boardTitle: document.querySelector('[data-role="board-title"]'),
   boardSubtitle: document.querySelector('[data-role="board-subtitle"]'),
@@ -129,13 +150,13 @@ function normalize(item = {}) {
     title: item.title || 'New session',
     category: CONFIG.categories.includes(item.category) ? item.category : CONFIG.categories[0],
     state: CONFIG.states.includes(item.state) ? item.state : CONFIG.states[0],
-    score: Number(item.score ?? 7),
-    effort: Number(item.effort ?? 3),
-    confidence: Number(item.confidence ?? 5),
-    minutes: Number(item.minutes ?? 60),
-    reviews: Number(item.reviews ?? 0),
+    score: clampNumber(item.score, ITEM_NUMBER_BOUNDS.score),
+    effort: clampNumber(item.effort, ITEM_NUMBER_BOUNDS.effort),
+    confidence: clampNumber(item.confidence, ITEM_NUMBER_BOUNDS.confidence),
+    minutes: clampNumber(item.minutes, ITEM_NUMBER_BOUNDS.minutes),
+    reviews: clampNumber(item.reviews, ITEM_NUMBER_BOUNDS.reviews),
     module: item.module || 'Module or topic',
-    dueDate: item.dueDate || todayISO(2),
+    dueDate: validIsoDate(item.dueDate, todayISO(2)),
     note: item.note || 'Capture the goal of this study block and what would make it feel complete.',
   };
 }
@@ -199,12 +220,18 @@ function commit(nextState) {
   render();
 }
 
+function coerceField(field, value) {
+  if (field === 'dueDate') return validIsoDate(value, todayISO(2));
+  if (NUMBER_FIELDS.has(field)) return clampNumber(value, ITEM_NUMBER_BOUNDS[field]);
+  return value;
+}
+
 function updateSelected(field, value) {
   const target = selectedItem();
   if (!target) return;
   commit({
     ...state,
-    items: state.items.map((item) => item.id === target.id ? { ...item, [field]: NUMBER_FIELDS.has(field) ? Number(value) : value } : item),
+    items: state.items.map((item) => item.id === target.id ? { ...item, [field]: coerceField(field, value) } : item),
   });
 }
 
