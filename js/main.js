@@ -135,6 +135,15 @@ function formatDate(value) {
   return new Date(`${value}T00:00:00`).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
 }
 
+function dueBadge(item) {
+  const days = daysFromToday(item.dueDate);
+  const formatted = formatDate(item.dueDate);
+  if (item.state === 'Complete') return { tone: 'success', label: `Due ${formatted}` };
+  if (days < 0) return { tone: 'danger', label: `Overdue ${formatted}` };
+  if (days <= 2) return { tone: 'warn', label: `Due ${formatted}` };
+  return { tone: 'success', label: `Due ${formatted}` };
+}
+
 function escapeHtml(value) {
   return String(value || '')
     .replaceAll('&', '&amp;')
@@ -393,7 +402,9 @@ function renderList(items) {
     return;
   }
 
-  refs.list.innerHTML = items.map((item) => `
+  refs.list.innerHTML = items.map((item) => {
+    const due = dueBadge(item);
+    return `
     <button class="item ${item.id === state.ui.selectedId ? 'is-selected' : ''}" type="button" data-id="${escapeHtml(item.id)}">
       <div class="item-top">
         <strong>${escapeHtml(item.title)}</strong>
@@ -401,7 +412,7 @@ function renderList(items) {
       </div>
       <p>${escapeHtml(item.note)}</p>
       <div class="badge-row">
-        <span class="pill ${daysFromToday(item.dueDate) <= 2 ? 'warn' : 'success'}">Due ${formatDate(item.dueDate)}</span>
+        <span class="pill ${due.tone}">${due.label}</span>
         <span class="pill">${item.minutes} min</span>
         <span class="pill">${escapeHtml(item.module)}</span>
       </div>
@@ -412,7 +423,8 @@ function renderList(items) {
         <span>${item.reviews} review cycles</span>
       </div>
     </button>
-  `).join('');
+  `;
+  }).join('');
 }
 
 function renderEditor(item) {
@@ -494,7 +506,7 @@ function renderEditor(item) {
         <button class="btn" type="button" data-action="mark-complete">Mark complete</button>
       </div>
       <div class="editor-actions">
-        <span class="helper">Due ${formatDate(item.dueDate)}, ${item.minutes} planned minutes, ${item.reviews} review cycles.</span>
+        <span class="helper">${dueBadge(item).label}, ${item.minutes} planned minutes, ${item.reviews} review cycles.</span>
         <button class="btn btn-danger" type="button" data-action="remove-current">Remove</button>
       </div>
     </div>
@@ -512,15 +524,18 @@ function renderOrbitPanels() {
       <span class="chip">${active.length} live</span>
     </div>
     <div class="stack">
-      ${active.slice(0, 3).map((item) => `
+      ${active.slice(0, 3).map((item) => {
+        const due = dueBadge(item);
+        return `
         <div class="mini-card">
           <div class="inline-split">
             <strong>${escapeHtml(item.title)}</strong>
-            <span class="pill ${daysFromToday(item.dueDate) <= 2 ? 'warn' : 'success'}">${formatDate(item.dueDate)}</span>
+            <span class="pill ${due.tone}">${due.label}</span>
           </div>
           <p>${item.minutes} minutes, ${item.confidence}/10 confidence, ${escapeHtml(item.module)}.</p>
         </div>
-      `).join('') || `<div class="empty"><strong>Nothing queued</strong><p>Everything is complete. Nicely done.</p></div>`}
+      `;
+      }).join('') || `<div class="empty"><strong>Nothing queued</strong><p>Everything is complete. Nicely done.</p></div>`}
     </div>
   `;
 
