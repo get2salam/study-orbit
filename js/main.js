@@ -342,13 +342,16 @@ function markComplete() {
 
 function renderStats(items) {
   const totalMinutes = state.items.reduce((sum, item) => sum + item.minutes, 0);
-  const dueSoon = state.items.filter((item) => daysFromToday(item.dueDate) <= 7 && item.state !== 'Complete').length;
+  const active = state.items.filter((item) => item.state !== 'Complete');
+  const dueSoon = active.filter((item) => daysFromToday(item.dueDate) <= 7).length;
+  const overdue = active.filter((item) => daysFromToday(item.dueDate) < 0).length;
   const avgConfidence = state.items.length ? (state.items.reduce((sum, item) => sum + item.confidence, 0) / state.items.length).toFixed(1) : '0.0';
   const complete = state.items.filter((item) => item.state === 'Complete').length;
+  const dueNote = overdue ? `${overdue} overdue right now` : 'sessions needing near-term focus';
   const cards = [
     ['Sessions', String(state.items.length), 'tracked learning blocks'],
     ['Planned minutes', `${totalMinutes}m`, 'current board workload'],
-    ['Due this week', String(dueSoon), 'sessions needing near-term focus'],
+    ['Due this week', String(dueSoon), dueNote],
     ['Confidence', avgConfidence, `${complete} sessions fully complete`],
   ];
   refs.stats.innerHTML = cards.map(([label, valueText, note]) => `
@@ -362,9 +365,10 @@ function renderStats(items) {
 }
 
 function renderInsights(items) {
-  const nextDue = [...state.items].sort((a, b) => daysFromToday(a.dueDate) - daysFromToday(b.dueDate))[0];
+  const active = state.items.filter((item) => item.state !== 'Complete');
+  const nextDue = [...active].sort((a, b) => daysFromToday(a.dueDate) - daysFromToday(b.dueDate))[0];
   const mostConfident = [...state.items].sort((a, b) => b.confidence - a.confidence)[0];
-  const heaviest = [...state.items].sort((a, b) => b.minutes - a.minutes)[0];
+  const heaviest = [...active].sort((a, b) => b.minutes - a.minutes)[0];
   const cards = [
     {
       label: 'Next deadline',
