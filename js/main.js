@@ -90,6 +90,9 @@ const refs = {
 const toastHost = (() => {
   const host = document.createElement('div');
   host.className = 'toast-host';
+  host.setAttribute('role', 'status');
+  host.setAttribute('aria-live', 'polite');
+  host.setAttribute('aria-atomic', 'true');
   document.body.appendChild(host);
   return host;
 })();
@@ -623,7 +626,22 @@ document.addEventListener('change', async (event) => {
   }
 });
 
+function clearFilters() {
+  const hasFilter = state.ui.search || state.ui.category !== 'all' || state.ui.status !== 'all';
+  if (!hasFilter) return false;
+  commit({ ...state, ui: { ...state.ui, search: '', category: 'all', status: 'all' } });
+  showToast('Cleared search and filters.');
+  return true;
+}
+
 document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && event.target === refs.search) {
+    if (clearFilters()) {
+      event.preventDefault();
+      refs.search.blur();
+    }
+    return;
+  }
   if (event.target.closest('input, textarea, select')) return;
   if (event.key.toLowerCase() === 'n') {
     event.preventDefault();
@@ -632,6 +650,9 @@ document.addEventListener('keydown', (event) => {
   if (event.key === '/') {
     event.preventDefault();
     refs.search.focus();
+  }
+  if (event.key === 'Escape' && clearFilters()) {
+    event.preventDefault();
   }
 });
 

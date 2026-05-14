@@ -33,6 +33,7 @@ Then open <http://localhost:8000>.
 
 - `N` creates a new study block
 - `/` focuses the search box
+- `Esc` clears the search and filters (works from the search box too)
 
 ## Data shape
 
