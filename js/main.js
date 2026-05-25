@@ -57,12 +57,24 @@ const ITEM_NUMBER_BOUNDS = {
   minutes: { min: 0, max: 1440, fallback: 60 },
   reviews: { min: 0, max: 999, fallback: 0 },
 };
+const ITEM_STRING_BOUNDS = {
+  title: { maxLength: 120, fallback: 'New session' },
+  module: { maxLength: 80, fallback: 'Module or topic' },
+  note: { maxLength: 600, fallback: 'Capture the goal of this study block and what would make it feel complete.' },
+};
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 function clampNumber(value, { min, max, fallback }) {
   const num = Number(value);
   if (!Number.isFinite(num)) return fallback;
   return Math.min(max, Math.max(min, Math.round(num)));
+}
+
+function sanitizeString(value, { maxLength, fallback }) {
+  if (typeof value !== 'string') return fallback;
+  const trimmed = value.trim();
+  if (!trimmed) return fallback;
+  return trimmed.length > maxLength ? trimmed.slice(0, maxLength) : trimmed;
 }
 
 function validIsoDate(value, fallback) {
@@ -159,7 +171,7 @@ function escapeHtml(value) {
 function normalize(item = {}) {
   return {
     id: item.id || uid(),
-    title: item.title || 'New session',
+    title: sanitizeString(item.title, ITEM_STRING_BOUNDS.title),
     category: CONFIG.categories.includes(item.category) ? item.category : CONFIG.categories[0],
     state: CONFIG.states.includes(item.state) ? item.state : CONFIG.states[0],
     score: clampNumber(item.score, ITEM_NUMBER_BOUNDS.score),
@@ -167,9 +179,9 @@ function normalize(item = {}) {
     confidence: clampNumber(item.confidence, ITEM_NUMBER_BOUNDS.confidence),
     minutes: clampNumber(item.minutes, ITEM_NUMBER_BOUNDS.minutes),
     reviews: clampNumber(item.reviews, ITEM_NUMBER_BOUNDS.reviews),
-    module: item.module || 'Module or topic',
+    module: sanitizeString(item.module, ITEM_STRING_BOUNDS.module),
     dueDate: validIsoDate(item.dueDate, todayISO(2)),
-    note: item.note || 'Capture the goal of this study block and what would make it feel complete.',
+    note: sanitizeString(item.note, ITEM_STRING_BOUNDS.note),
   };
 }
 
@@ -456,15 +468,15 @@ function renderEditor(item) {
     <div class="editor-grid">
       <label class="field">
         <span>Session title</span>
-        <input type="text" data-item-field="title" value="${escapeHtml(item.title)}" />
+        <input type="text" data-item-field="title" maxlength="${ITEM_STRING_BOUNDS.title.maxLength}" value="${escapeHtml(item.title)}" />
       </label>
       <label class="field">
         <span>Module or topic</span>
-        <input type="text" data-item-field="module" value="${escapeHtml(item.module)}" />
+        <input type="text" data-item-field="module" maxlength="${ITEM_STRING_BOUNDS.module.maxLength}" value="${escapeHtml(item.module)}" />
       </label>
       <label class="field">
         <span>Session note</span>
-        <textarea data-item-field="note">${escapeHtml(item.note)}</textarea>
+        <textarea data-item-field="note" maxlength="${ITEM_STRING_BOUNDS.note.maxLength}">${escapeHtml(item.note)}</textarea>
       </label>
       <div class="field-grid">
         <label class="field">
