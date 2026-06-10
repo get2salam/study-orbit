@@ -29,6 +29,16 @@ python -m http.server 8000
 
 Then open <http://localhost:8000>.
 
+## Verify
+
+The scoring contract (urgency curve, state demotion, overdue handling, sanitization) is covered by a small `node:test` suite with no external dependencies:
+
+```bash
+npm test           # run the scoring contract tests
+npm run check      # syntax-check the browser modules
+npm run verify     # both, the same gate CI runs
+```
+
 ## Keyboard shortcuts
 
 - `N` creates a new study block

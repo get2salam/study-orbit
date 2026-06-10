@@ -1,3 +1,13 @@
+import {
+  clampNumber,
+  sanitizeString,
+  validIsoDate,
+  daysFromToday,
+  priority,
+  ITEM_NUMBER_BOUNDS,
+  ITEM_STRING_BOUNDS,
+} from './scoring.js';
+
 const CONFIG = {
   slug: 'study-orbit',
   title: 'Study Orbit',
@@ -50,38 +60,6 @@ const CONFIG = {
 
 const STORAGE_KEY = `${CONFIG.slug}/state/v2`;
 const NUMBER_FIELDS = new Set(['score', 'effort', 'confidence', 'minutes', 'reviews']);
-const ITEM_NUMBER_BOUNDS = {
-  score: { min: 1, max: 10, fallback: 7 },
-  effort: { min: 1, max: 10, fallback: 3 },
-  confidence: { min: 1, max: 10, fallback: 5 },
-  minutes: { min: 0, max: 1440, fallback: 60 },
-  reviews: { min: 0, max: 999, fallback: 0 },
-};
-const ITEM_STRING_BOUNDS = {
-  title: { maxLength: 120, fallback: 'New session' },
-  module: { maxLength: 80, fallback: 'Module or topic' },
-  note: { maxLength: 600, fallback: 'Capture the goal of this study block and what would make it feel complete.' },
-};
-const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-
-function clampNumber(value, { min, max, fallback }) {
-  const num = Number(value);
-  if (!Number.isFinite(num)) return fallback;
-  return Math.min(max, Math.max(min, Math.round(num)));
-}
-
-function sanitizeString(value, { maxLength, fallback }) {
-  if (typeof value !== 'string') return fallback;
-  const trimmed = value.trim();
-  if (!trimmed) return fallback;
-  return trimmed.length > maxLength ? trimmed.slice(0, maxLength) : trimmed;
-}
-
-function validIsoDate(value, fallback) {
-  if (typeof value !== 'string' || !ISO_DATE_PATTERN.test(value)) return fallback;
-  const parsed = new Date(`${value}T00:00:00`);
-  return Number.isNaN(parsed.getTime()) ? fallback : value;
-}
 
 const refs = {
   boardTitle: document.querySelector('[data-role="board-title"]'),
@@ -132,13 +110,6 @@ function todayISO(offset = 0) {
   return date.toISOString().slice(0, 10);
 }
 
-function daysFromToday(value) {
-  if (!value) return 999;
-  const today = new Date(`${todayISO()}T00:00:00`);
-  const target = new Date(`${value}T00:00:00`);
-  return Math.round((target - today) / 86400000);
-}
-
 function bumpDate(value, days) {
   const date = new Date(`${value || todayISO()}T00:00:00`);
   date.setDate(date.getDate() + days);
@@ -183,12 +154,6 @@ function normalize(item = {}) {
     dueDate: validIsoDate(item.dueDate, todayISO(2)),
     note: sanitizeString(item.note, ITEM_STRING_BOUNDS.note),
   };
-}
-
-function priority(item) {
-  const dueBoost = Math.max(0, 7 - Math.max(daysFromToday(item.dueDate), 0)) * 3;
-  const stateBoost = item.state === 'Running' ? 7 : item.state === 'Planned' ? 4 : item.state === 'Solid' ? 3 : -2;
-  return item.score * 7 + item.confidence * 4 + item.reviews * 2 + dueBoost + stateBoost - item.effort * 3;
 }
 
 function seedState() {
