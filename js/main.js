@@ -7,6 +7,7 @@ import {
   ITEM_NUMBER_BOUNDS,
   ITEM_STRING_BOUNDS,
 } from './scoring.js';
+import { parseBackup } from './backup.js';
 
 const CONFIG = {
   slug: 'study-orbit',
@@ -257,29 +258,15 @@ function exportState() {
   showToast('Downloaded backup.');
 }
 
-function parseBackup(raw) {
-  let parsed;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    throw new Error('Backup file is not valid JSON.');
-  }
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    throw new Error('Backup must be a JSON object.');
-  }
-  if (!Array.isArray(parsed.items)) {
-    throw new Error('Backup is missing an "items" array.');
-  }
-  return parsed;
-}
-
 async function importState(file) {
-  const parsed = parseBackup(await file.text());
+  const parsed = parseBackup(await file.text(), { normalizeItem: normalize });
+  const base = seedState();
   commit({
-    ...seedState(),
-    ...parsed,
-    items: parsed.items.map((item) => normalize(item)),
-    ui: { ...seedState().ui, ...(parsed.ui || {}) },
+    ...base,
+    boardTitle: parsed.boardTitle || base.boardTitle,
+    boardSubtitle: parsed.boardSubtitle || base.boardSubtitle,
+    items: parsed.items,
+    ui: { ...base.ui, ...parsed.ui },
   });
   showToast('Imported backup.');
 }
