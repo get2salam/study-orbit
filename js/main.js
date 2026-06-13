@@ -366,8 +366,8 @@ function renderList(items) {
   if (!items.length) {
     refs.list.innerHTML = `
       <div class="empty">
-        <strong>No study sessions yet</strong>
-        <p>Map the sessions that matter and keep your revision honest.</p>
+        <strong>No matching study sessions</strong>
+        <p>Try clearing filters or create a new session to keep your revision honest.</p>
       </div>
     `;
     return;
@@ -375,8 +375,10 @@ function renderList(items) {
 
   refs.list.innerHTML = items.map((item) => {
     const due = dueBadge(item);
+    const selected = item.id === state.ui.selectedId;
+    const ariaLabel = `${item.title}. ${item.category}, ${item.state}. Priority ${priority(item)}. ${due.label}. ${item.confidence} out of 10 confidence. ${item.reviews} review cycles.`;
     return `
-    <button class="item ${item.id === state.ui.selectedId ? 'is-selected' : ''}" type="button" data-id="${escapeHtml(item.id)}">
+    <button class="item ${selected ? 'is-selected' : ''}" type="button" data-id="${escapeHtml(item.id)}" aria-current="${selected ? 'true' : 'false'}" aria-label="${escapeHtml(ariaLabel)}">
       <div class="item-top">
         <strong>${escapeHtml(item.title)}</strong>
         <span class="score">${priority(item)}</span>
@@ -472,13 +474,13 @@ function renderEditor(item) {
         <input type="number" min="0" step="1" data-item-field="reviews" value="${item.reviews}" />
       </label>
       <div class="quick-actions">
-        <button class="btn" type="button" data-action="start-focus">Start focus block</button>
-        <button class="btn" type="button" data-action="log-review">Log review cycle</button>
-        <button class="btn" type="button" data-action="mark-complete">Mark complete</button>
+        <button class="btn" type="button" data-action="start-focus" aria-label="Start focus block for ${escapeHtml(item.title)}">Start focus block</button>
+        <button class="btn" type="button" data-action="log-review" aria-label="Log one review cycle for ${escapeHtml(item.title)}">Log review cycle</button>
+        <button class="btn" type="button" data-action="mark-complete" aria-label="Mark ${escapeHtml(item.title)} complete">Mark complete</button>
       </div>
       <div class="editor-actions">
         <span class="helper">${dueBadge(item).label}, ${item.minutes} planned minutes, ${item.reviews} review cycles.</span>
-        <button class="btn btn-danger" type="button" data-action="remove-current">Remove</button>
+        <button class="btn btn-danger" type="button" data-action="remove-current" aria-label="Remove ${escapeHtml(item.title)}">Remove</button>
       </div>
     </div>
   `;
