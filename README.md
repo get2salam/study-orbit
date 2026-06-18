@@ -12,6 +12,7 @@ Study Orbit is a focused study board for students and solo learners who want som
 - tracks **due dates**, **planned minutes**, **review cycles**, and **confidence** per session
 - highlights the next deadline, strongest knowledge area, and heaviest block
 - includes quick actions for starting a focus block, logging a review cycle, and marking work complete
+- exports a deterministic coach brief helper for AI study agents and evaluation tests
 - renders a “today orbit” queue and a category load map beneath the main board
 - saves locally in the browser with JSON import/export backups
 
