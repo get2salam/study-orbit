@@ -40,6 +40,26 @@ npm run check      # syntax-check the browser modules
 npm run verify     # both, the same gate CI runs
 ```
 
+## Evaluating AI coach replies
+
+`js/coachBrief.js` turns a board into a prioritized `focusQueue` and a `coachPrompt` you can hand to an LLM. `js/agentEval.js` grades whatever the model sends back against a deterministic rubric: does it name the top-risk session, address its risk, give a timebox, suggest a review action, and check confidence, all while staying concise.
+
+`examples/scoreCoachReply.mjs` runs both sides of that loop against a sample board and scores a strong reply against a generic one so you can see the rubric in action:
+
+```bash
+npm run example
+```
+
+```
+Coach prompt: Coach 3 priority study blocks; start with Past paper sprint because it is deadline-risk.
+
+strong reply -> score 100 (PASS)
+weak reply -> score 10 (FAIL)
+  Missing mentionsTopFocus. Missing addressesTopRisk. Missing givesTimebox. Missing includesReviewAction. Missing checksConfidence.
+```
+
+`tests/example.test.mjs` runs the same walkthrough as part of `npm test`, so this README example can't silently drift from the scoring rubric.
+
 ## Keyboard shortcuts
 
 - `N` creates a new study block
