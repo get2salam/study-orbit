@@ -58,6 +58,17 @@ test('daysFromToday uses an injectable today and handles missing values', () => 
   assert.equal(daysFromToday('', FIXED_TODAY), 999);
 });
 
+test('daysFromToday falls back to 999 instead of NaN on unparseable due dates', () => {
+  assert.equal(daysFromToday('not-a-date', FIXED_TODAY), 999);
+  assert.equal(daysFromToday('2026-13-40', FIXED_TODAY), 999);
+  assert.equal(daysFromToday('soon', FIXED_TODAY), 999);
+});
+
+test('priority stays finite when dueDate is malformed instead of collapsing to NaN', () => {
+  const score = priority({ ...baseItem, dueDate: 'not-a-date' }, FIXED_TODAY);
+  assert.ok(Number.isFinite(score), `priority should be finite, got ${score}`);
+});
+
 test('priority ranks soon-due sessions above far-due ones', () => {
   const dueToday = priority({ ...baseItem, dueDate: '2026-04-25' }, FIXED_TODAY);
   const dueLater = priority({ ...baseItem, dueDate: '2026-05-15' }, FIXED_TODAY);

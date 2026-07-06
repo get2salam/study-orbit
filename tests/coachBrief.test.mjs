@@ -52,3 +52,14 @@ test('buildCoachBrief ranks risks deterministically and handles empty input', ()
   assert.equal(empty.focusQueue.length, 0);
   assert.match(empty.coachPrompt, /No active study blocks/);
 });
+
+test('buildCoachBrief tolerates a malformed dueDate instead of misclassifying it as overdue', () => {
+  const brief = buildCoachBrief([
+    item({ title: 'Corrupted date entry', dueDate: 'not-a-date', confidence: 7, reviews: 2 }),
+  ], { today: FIXED_TODAY });
+
+  const [entry] = brief.focusQueue;
+  assert.notEqual(entry.risk, 'overdue');
+  assert.equal(entry.daysUntilDue, 999);
+  assert.ok(Number.isFinite(entry.priority), `priority should be finite, got ${entry.priority}`);
+});

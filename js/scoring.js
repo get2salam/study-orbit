@@ -46,6 +46,10 @@ export function daysFromToday(value, today = new Date()) {
   const anchor = new Date(today);
   anchor.setHours(0, 0, 0, 0);
   const target = new Date(`${value}T00:00:00`);
+  // A malformed or nonsense due date (agent-generated boards aren't guaranteed
+  // to run through validIsoDate first) must not leak NaN into priority() and
+  // risk classification downstream; treat it like "no due date" instead.
+  if (Number.isNaN(target.getTime())) return 999;
   return Math.round((target - anchor) / 86400000);
 }
 
